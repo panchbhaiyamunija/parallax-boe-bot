@@ -1,0 +1,103 @@
+' =========================================================================
+' Title: EscapingCorners.bs2
+' Author: Munija Panchbhaiya
+' Platform: Parallax Board of Education (BS2)
+' Language: PBASIC 2.5
+' Description: Autonomous Boe-Bot navigation featuring corner-escape logic.
+'              Detects alternating whisker contacts (P5 & P7) to break out
+'              of tight corner loops.
+' Source: Parallax Robotics with the Boe-Bot Manual
+' =========================================================================
+
+' {$STAMP BS2}
+' {$PBASIC 2.5}
+
+DEBUG "Program Running!"
+
+' -----[ Variables ]----------------------------------------------------------
+pulseCount VAR Byte       ' FOR...NEXT loop counter.
+counter    VAR Nib        ' Counts alternate contacts.
+old7       VAR Bit        ' Stores previous IN7.
+old5       VAR Bit        ' Stores previous IN5.
+
+' -----[ Initialization ]-----------------------------------------------------
+FREQOUT 4, 2000, 3000      ' Signal program start/reset.
+
+counter = 1                ' Start alternate corner count.
+old7 = 0                   ' Make up old values.
+old5 = 1
+
+' -----[ Main Routine ]-------------------------------------------------------
+DO
+
+  ' --- Detect Consecutive Alternate Corners -------------------------------
+  IF (IN7 <> IN5) THEN
+    IF (old7 <> IN7) AND (old5 <> IN5) THEN
+
+      counter = counter + 1
+      old7 = IN7
+      old5 = IN5
+
+      IF (counter > 4) THEN
+        counter = 1
+        GOSUB Back_Up
+        GOSUB Turn_Left
+        GOSUB Turn_Left
+      ENDIF
+
+    ELSE
+      counter = 1
+    ENDIF
+  ENDIF
+
+  ' --- Same Navigation Routine from RoamingWithWhiskers.bs2 ----------------
+  IF (IN5 = 0) AND (IN7 = 0) THEN
+    GOSUB Back_Up
+    GOSUB Turn_Left
+    GOSUB Turn_Left
+
+  ELSEIF (IN5 = 0) THEN
+    GOSUB Back_Up
+    GOSUB Turn_Right
+
+  ELSEIF (IN7 = 0) THEN
+    GOSUB Back_Up
+    GOSUB Turn_Left
+
+  ELSE
+    GOSUB Forward_Pulse
+  ENDIF
+
+LOOP
+
+' -----[ Subroutines ]--------------------------------------------------------
+
+Forward_Pulse:
+  PULSOUT 13, 850
+  PULSOUT 12, 650
+  PAUSE 20
+RETURN
+
+Turn_Left:
+  FOR pulseCount = 0 TO 20
+    PULSOUT 13, 650
+    PULSOUT 12, 650
+    PAUSE 20
+  NEXT
+RETURN
+
+Turn_Right:
+  FOR pulseCount = 0 TO 20
+    PULSOUT 13, 850
+    PULSOUT 12, 850
+    PAUSE 20
+  NEXT
+RETURN
+
+Back_Up:
+  FOR pulseCount = 0 TO 40
+    PULSOUT 13, 650
+    PULSOUT 12, 850
+    PAUSE 20
+  NEXT
+RETURN
